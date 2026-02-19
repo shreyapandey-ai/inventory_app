@@ -25,21 +25,21 @@ export async function POST(req: Request) {
 
     const text = await file.text();
     const records = parse(text, {
-  columns: true,
-  skip_empty_lines: true,
-}) as ProductCSVRow[];
+      columns: true,
+      skip_empty_lines: true,
+    }) as ProductCSVRow[];
 
-
-    // ✅ Fetch once (IMPORTANT)
+    // ✅ Fetch once
     const categories = await prisma.category.findMany();
     const suppliers = await prisma.supplier.findMany();
 
     const categoryMap = new Map(categories.map(c => [c.name, c]));
     const supplierMap = new Map(suppliers.map(s => [s.name, s]));
 
-    const products = [];
+    // ✅ Add this (YOU MISSED)
     const errors: string[] = [];
 
+    // ✅ Fetch once (IMPORTANT)
     for (const row of records) {
       const name = row.name?.trim();
       const categoryName = row.categoryName?.trim();
@@ -48,7 +48,6 @@ export async function POST(req: Request) {
       const quantity = Math.max(0, Number(row.quantity));
       const price = Math.max(0, Number(row.price));
 
-      // ✅ Validate
       if (!name || !categoryName || !supplierName) {
         errors.push(`Invalid row: ${JSON.stringify(row)}`);
         continue;
@@ -57,38 +56,73 @@ export async function POST(req: Request) {
       const category = categoryMap.get(categoryName);
       const supplier = supplierMap.get(supplierName);
 
-      if (!category) {
-        errors.push(`Category not found: ${categoryName}`);
+      if (!category || !supplier) {
+        errors.push(`Invalid relation: ${name}`);
         continue;
       }
 
-      if (!supplier) {
-        errors.push(`Supplier not found: ${supplierName}`);
-        continue;
+      // 🔥 CHECK EXISTING PRODUCT
+      const existing = await prisma.product.findFirst({
+        where: { name },
+      });
+
+
+      if (!existing) {
+        // ✅ CREATE PRODUCT
+        const newProduct = await prisma.product.create({
+          data: {
+            name,
+            sku: `SKU-${randomUUID().slice(0, 8)}`,
+            quantity,
+            price,
+            categoryId: category.id,
+            supplierId: supplier.id,
+          },
+        });
+
+        // 🔥 CREATE MOVEMENT
+        await prisma.stockMovement.create({
+          data: {
+            productId: newProduct.id,
+            type: "RESTOCK",
+            quantity,
+            note: "Initial bulk upload",
+          },
+        });
+
+      } else {
+        // 🔥 UPDATE VIA MOVEMENT (CORRECT WAY)
+
+        const newQuantity = existing.quantity + quantity;
+
+        await prisma.product.update({
+          where: { id: existing.id },
+          data: {
+            quantity: newQuantity,
+          },
+        });
+
+        await prisma.stockMovement.create({
+          data: {
+            productId: existing.id,
+            type: "RESTOCK",
+            quantity,
+            note: "Bulk update",
+          },
+        });
       }
-
-      products.push({
-        name,
-        sku: `SKU-${randomUUID().slice(0, 8)}`,
-        quantity,
-        price,
-        categoryId: category.id,
-        supplierId: supplier.id,
-      });
     }
 
-    if (products.length > 0) {
-      await prisma.product.createMany({
-        data: products,
-      });
-    }
+
+
 
     return NextResponse.json({
       message: "Bulk upload completed",
-      successCount: products.length,
+      successCount: records.length - errors.length,
       failedCount: errors.length,
-      errors, // 🔥 useful for UI
+      errors,
     });
+
 
   } catch (err) {
     console.error(err);

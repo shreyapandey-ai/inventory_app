@@ -44,10 +44,13 @@ export default function DashboardPage() {
   )
   const lowStock = lowStockProducts.length
 
-  const chartData = products.map((p) => ({
-    name: p.name,
-    quantity: p.quantity,
-  }))
+  const chartData = [...products]
+    .sort((a, b) => b.quantity - a.quantity)
+    .slice(0, 10) // 🔥 only top 10
+    .map((p) => ({
+      name: p.name,
+      quantity: p.quantity,
+    }));
 
   const pieData = [
     { name: "Healthy", value: totalProducts - lowStock },
@@ -120,25 +123,7 @@ export default function DashboardPage() {
       {/* CHARTS */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-        <Card className="hover:shadow-2xl transition-all duration-300">
-          <CardHeader>
-            <CardTitle>Stock by Product</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={320}>
-              <BarChart data={chartData}>
-                <XAxis dataKey="name" stroke="#64748b" />
-                <YAxis stroke="#64748b" />
-                <Tooltip />
-                <Bar
-                  dataKey="quantity"
-                  fill="#14b8a6"
-                  radius={[8, 8, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+        
 
         <Card className="hover:shadow-2xl transition-all duration-300">
           <CardHeader>
@@ -164,6 +149,36 @@ export default function DashboardPage() {
         </Card>
 
       </div>
+      <Card className="hover:shadow-2xl transition-all duration-300">
+          <CardHeader>
+            <CardTitle>Stock by Product</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={320}>
+              <BarChart data={chartData}>
+                <XAxis
+                  dataKey="name"
+                  stroke="#64748b"
+                  interval={0}
+                  angle={-30}
+                  textAnchor="end"
+                  height={70}
+                  tickFormatter={(value) =>
+                    value.length > 10 ? value.slice(0, 10) + "..." : value
+                  }
+                />
+
+                <YAxis stroke="#64748b" />
+                <Tooltip />
+                <Bar
+                  dataKey="quantity"
+                  fill="#14b8a6"
+                  radius={[8, 8, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
       {/* LOW STOCK ALERTS */}
       <Card className="hover:shadow-2xl transition-all duration-300 border-red-200">

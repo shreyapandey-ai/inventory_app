@@ -11,7 +11,6 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const cookieStore = await cookies();
-
   const token = cookieStore.get("token")?.value;
 
   if (!token) redirect("/login");
@@ -29,81 +28,86 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
+  const navItems = [
+    { name: "Dashboard", href: "/dashboard" },
+    { name: "Products", href: "/dashboard/products" },
+    { name: "Categories", href: "/dashboard/categories" },
+    { name: "Suppliers", href: "/dashboard/suppliers" },
+    { name: "Analytics", href: "/dashboard/analytics" },
+    { name: "AI Assistant", href: "/dashboard/chat" },
+  ];
+
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
 
       {/* SIDEBAR */}
-      <div className="w-64 bg-white border-r px-6 py-8 flex flex-col">
+      <aside className="w-64 bg-white/80 backdrop-blur border-r px-6 py-8 flex flex-col shadow-sm">
 
-        <h1 className="text-2xl font-semibold text-teal-600 mb-10">
-          InventoryOS
-        </h1>
+        {/* BRAND */}
+        <div className="mb-10">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-teal-600 to-cyan-500 bg-clip-text text-transparent">
+            InventoryOS
+          </h1>
+          <p className="text-xs text-slate-400 mt-1">
+            Admin control panel
+          </p>
+        </div>
 
+        {/* NAV */}
         <nav className="space-y-2 text-sm">
 
-          <Link
-            href="/dashboard"
-            className="block px-4 py-2 rounded-xl hover:bg-teal-50 hover:text-teal-600 transition"
-          >
-            Dashboard
-          </Link>
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="
+                group flex items-center px-4 py-2 rounded-xl 
+                text-slate-600 
+                hover:bg-teal-50 hover:text-teal-600 
+                transition-all duration-200
+              "
+            >
+              <span className="flex-1">{item.name}</span>
 
-          <Link
-            href="/dashboard/products"
-            className="block px-4 py-2 rounded-xl hover:bg-teal-50 hover:text-teal-600 transition"
-          >
-            Products
-          </Link>
-
-          <Link
-            href="/dashboard/categories"
-            className="block px-4 py-2 rounded-xl hover:bg-teal-50 hover:text-teal-600 transition"
-          >
-            Categories
-          </Link>
-
-          <Link
-            href="/dashboard/suppliers"
-            className="block px-4 py-2 rounded-xl hover:bg-teal-50 hover:text-teal-600 transition"
-          >
-            Suppliers
-          </Link>
-          <Link
-            href="/dashboard/analytics"
-            className="block px-4 py-2 rounded-xl hover:bg-teal-50 hover:text-teal-600 transition"
-          >
-            Analytics
-          </Link>
-          <Link
-  href="/dashboard/chat"
-  className="block px-4 py-2 rounded-xl hover:bg-teal-50 hover:text-teal-600 transition"
->
-  AI Assistant
-</Link>
+              {/* subtle hover indicator */}
+              <span className="w-1.5 h-1.5 rounded-full bg-teal-500 opacity-0 group-hover:opacity-100 transition" />
+            </Link>
+          ))}
 
         </nav>
 
-        <div className="mt-auto text-xs text-slate-400">
+        {/* FOOTER */}
+        <div className="mt-auto text-xs text-slate-400 pt-6">
           © InventoryOS
         </div>
-      </div>
+      </aside>
 
       {/* MAIN */}
       <div className="flex-1 flex flex-col">
 
         {/* TOPBAR */}
-        <div className="h-16 bg-white border-b px-6 flex items-center justify-between">
+        <header className="h-16 bg-white/70 backdrop-blur border-b px-6 flex items-center justify-between shadow-sm">
 
-          <h2 className="text-lg font-semibold text-slate-700">
-            Admin Panel
-          </h2>
+          <div>
+            <h2 className="text-lg font-semibold text-slate-700">
+              Admin Panel
+            </h2>
+            <p className="text-xs text-slate-400">
+              Manage your inventory system
+            </p>
+          </div>
 
-          <LogoutButton />
+          <div className="flex items-center gap-4">
+            <div className="hidden md:block text-sm text-slate-500">
+              Welcome back
+            </div>
 
-        </div>
+            <LogoutButton />
+          </div>
+        </header>
 
         {/* CONTENT */}
-        <main className="p-6 md:p-8">
+        <main className="flex-1 p-6 md:p-8">
           {children}
         </main>
       </div>
