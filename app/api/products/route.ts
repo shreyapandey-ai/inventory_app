@@ -23,33 +23,47 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    // ✅ validation (VERY IMPORTANT)
-    if (
-      !body.name ||
-      !body.sku ||
-      !body.categoryId ||
-      !body.supplierId
-    ) {
+    // ✅ Required fields validation
+    if (!body.name || !body.categoryId || !body.supplierId) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
       );
     }
 
+    // ✅ Strict validation (DO NOT auto-correct)
+    if (body.quantity < 0) {
+      return NextResponse.json(
+        { error: "Quantity cannot be negative" },
+        { status: 400 }
+      );
+    }
+
+    if (body.price < 0) {
+      return NextResponse.json(
+        { error: "Price cannot be negative" },
+        { status: 400 }
+      );
+    }
+
+    // ✅ Auto-generate SKU (REMOVE FROM FRONTEND)
+    const sku = `SKU-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
     const product = await prisma.product.create({
       data: {
         name: body.name,
-        sku: body.sku || `SKU-${Date.now()}`,
+        sku,
         description: body.description || "",
-        quantity: Math.max(0, body.quantity),
-        price:  Math.max(0, body.price),
+        quantity: Number(body.quantity),
+        price: Number(body.price),
         categoryId: body.categoryId,
         supplierId: body.supplierId,
 
-        // ✅ STOCK MOVEMENT ENTRY
+        // Initial stock entry
         stockMovements: {
           create: {
-            change: body.quantity || 0,
+            quantity: Number(body.quantity),
+            type: "RESTOCK",
             note: "Initial stock",
           },
         },
@@ -69,3 +83,4 @@ export async function POST(req: Request) {
     );
   }
 }
+

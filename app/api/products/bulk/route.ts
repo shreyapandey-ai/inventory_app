@@ -1,3 +1,12 @@
+type ProductCSVRow = {
+  name: string;
+  quantity: string;
+  price: string;
+  categoryName: string;
+  supplierName: string;
+};
+
+
 export const runtime = "nodejs";
 
 import { prisma } from "@/lib/prisma";
@@ -15,11 +24,11 @@ export async function POST(req: Request) {
     }
 
     const text = await file.text();
-
     const records = parse(text, {
-      columns: true,
-      skip_empty_lines: true,
-    });
+  columns: true,
+  skip_empty_lines: true,
+}) as ProductCSVRow[];
+
 
     // ✅ Fetch once (IMPORTANT)
     const categories = await prisma.category.findMany();

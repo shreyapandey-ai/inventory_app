@@ -5,82 +5,68 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const { productId, quantity, type, note } = body;
-
-    // ✅ VALIDATION
-    if (!productId || !quantity || !type) {
+    if (!body.productId || !body.type || !body.quantity) {
       return NextResponse.json(
-        { error: "Missing fields" },
+        { error: "Missing required fields" },
         { status: 400 }
       );
     }
 
-    if (quantity <= 0) {
+    if (body.quantity <= 0) {
       return NextResponse.json(
-        { error: "Quantity must be > 0" },
+        { error: "Quantity must be greater than 0" },
         { status: 400 }
       );
     }
 
-    // 🔥 Normalize enum (important)
-    const movementType = type.toUpperCase();
-
-    const validTypes = ["SALE", "RESTOCK", "DAMAGE", "RETURN"];
-
-    if (!validTypes.includes(movementType)) {
-      return NextResponse.json(
-        { error: "Invalid movement type" },
-        { status: 400 }
-      );
-    }
-
-    // 🔥 TRANSACTION (VERY IMPORTANT)
-    const result = await prisma.$transaction(async (tx) => {
-      const product = await tx.product.findUnique({
-        where: { id: productId },
-      });
-
-      if (!product) {
-        throw new Error("Product not found");
-      }
-
-      let newQuantity = product.quantity;
-
-      // 🔥 BUSINESS LOGIC
-      if (movementType === "SALE" || movementType === "DAMAGE") {
-        newQuantity -= quantity;
-      } else {
-        newQuantity += quantity;
-      }
-
-      if (newQuantity < 0) {
-        throw new Error("Insufficient stock");
-      }
-
-      // ✅ Update product
-      const updatedProduct = await tx.product.update({
-        where: { id: productId },
-        data: { quantity: newQuantity },
-      });
-
-      // ✅ Create movement log
-      await tx.stockMovement.create({
-        data: {
-          productId,
-          type: movementType,
-          quantity,
-          note,
-        },
-      });
-
-      return updatedProduct;
+    const product = await prisma.product.findUnique({
+      where: { id: body.productId },
     });
 
-    return NextResponse.json(result);
+    if (!product) {
+      return NextResponse.json(
+        { error: "Product not found" },
+        { status: 404 }
+      );
+    }
 
-  } catch (err: any) {
+    let incrementValue = 0;
+
+    // If stock is decreasing
+    if (body.type === "SALE" || body.type === "DAMAGE") {
+      if (product.quantity - body.quantity < 0) {
+        return NextResponse.json(
+          { error: "Stock cannot go below zero" },
+          { status: 400 }
+        );
+      }
+      incrementValue = -body.quantity;
+    } else {
+      // RESTOCK or RETURN
+      incrementValue = body.quantity;
+    }
+
+    const updatedProduct = await prisma.product.update({
+      where: { id: body.productId },
+      data: {
+        quantity: {
+          increment: incrementValue,
+        },
+        stockMovements: {
+          create: {
+            type: body.type,
+            quantity: body.quantity,
+            note: body.note || null,
+          },
+        },
+      },
+    });
+
+    return NextResponse.json(updatedProduct);
+  } catch (error) {
+    console.log(error);
     return NextResponse.json(
-      { error: err.message || "Failed" },
+      { error: "Stock update failed" },
       { status: 500 }
     );
   }

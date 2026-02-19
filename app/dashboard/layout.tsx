@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import "@/lib/init";
 import jwt from "jsonwebtoken";
 import Link from "next/link";
 import LogoutButton from "./LogoutButton";
@@ -73,6 +74,12 @@ export default async function DashboardLayout({
           >
             Analytics
           </Link>
+          <Link
+  href="/dashboard/chat"
+  className="block px-4 py-2 rounded-xl hover:bg-teal-50 hover:text-teal-600 transition"
+>
+  AI Assistant
+</Link>
 
         </nav>
 

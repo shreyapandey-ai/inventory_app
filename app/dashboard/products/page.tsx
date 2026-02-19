@@ -5,8 +5,57 @@ import Link from "next/link";
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [suppliers, setSuppliers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [file, setFile] = useState<File | null>(null);
+
+  // ✅ Filters
+  const [stockFilter, setStockFilter] = useState("ALL");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [supplierFilter, setSupplierFilter] = useState("");
+
+  // ===============================
+  // FETCH DATA
+  // ===============================
+
+  async function fetchProducts() {
+    try {
+      const res = await fetch("/api/products");
+      const data = await res.json();
+      setProducts(Array.isArray(data) ? data : []);
+    } catch {
+      setProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function fetchFilters() {
+    const catRes = await fetch("/api/categories");
+    const supRes = await fetch("/api/suppliers");
+
+    setCategories(await catRes.json());
+    setSuppliers(await supRes.json());
+  }
+
+  useEffect(() => {
+    fetchProducts();
+    fetchFilters();
+  }, []);
+
+  // ===============================
+  // DELETE
+  // ===============================
+
+  async function handleDelete(id: string) {
+    await fetch(`/api/products/${id}`, { method: "DELETE" });
+    setProducts((prev) => prev.filter((p) => p.id !== id));
+  }
+
+  // ===============================
+  // BULK CSV
+  // ===============================
 
   async function handleUpload() {
     if (!file) return;
@@ -22,29 +71,19 @@ export default function ProductsPage() {
     location.reload();
   }
 
-  async function fetchProducts() {
-    try {
-      const res = await fetch("/api/products");
-      const data = await res.json();
-      setProducts(Array.isArray(data) ? data : []);
-    } catch {
-      setProducts([]);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  async function handleDelete(id: string) {
-    await fetch(`/api/products/${id}`, { method: "DELETE" });
-    setProducts((prev) => prev.filter((p) => p.id !== id));
-  }
-
   if (loading)
     return <div className="p-6 text-slate-500">Loading...</div>;
+
+  // ===============================
+  // APPLY FILTERS
+  // ===============================
+
+  const filteredProducts = products.filter((p) => {
+    if (stockFilter === "LOW" && p.quantity > 10) return false;
+    if (categoryFilter && p.category?.id !== categoryFilter) return false;
+    if (supplierFilter && p.supplier?.id !== supplierFilter) return false;
+    return true;
+  });
 
   return (
     <div className="p-6 md:p-8 bg-slate-50 min-h-screen">
@@ -68,7 +107,46 @@ export default function ProductsPage() {
         </Link>
       </div>
 
-      {/* ACTION BAR */}
+      {/* FILTER BAR */}
+      <div className="bg-white p-4 rounded-2xl shadow-sm border mb-6 flex flex-wrap gap-4">
+
+        {/* Low Stock */}
+        <select
+          onChange={(e) => setStockFilter(e.target.value)}
+          className="border p-2 rounded-lg"
+        >
+          <option value="ALL">All Stock</option>
+          <option value="LOW">Low Stock (≤10)</option>
+        </select>
+
+        {/* Category */}
+        <select
+          onChange={(e) => setCategoryFilter(e.target.value)}
+          className="border p-2 rounded-lg"
+        >
+          <option value="">All Categories</option>
+          {categories.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+
+        {/* Supplier */}
+        <select
+          onChange={(e) => setSupplierFilter(e.target.value)}
+          className="border p-2 rounded-lg"
+        >
+          <option value="">All Suppliers</option>
+          {suppliers.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* CSV Upload */}
       <div className="bg-white p-4 rounded-2xl shadow-sm border mb-6 flex items-center gap-3">
         <input
           type="file"
@@ -91,6 +169,7 @@ export default function ProductsPage() {
 
           <thead className="bg-slate-100 text-slate-600">
             <tr>
+              <th className="text-left p-4">SKU</th>
               <th className="text-left p-4">Name</th>
               <th className="text-left p-4">Stock</th>
               <th className="text-left p-4">Category</th>
@@ -100,13 +179,24 @@ export default function ProductsPage() {
           </thead>
 
           <tbody>
-            {products.map((p) => (
+            {filteredProducts.map((p) => (
               <tr
                 key={p.id}
                 className="border-t hover:bg-slate-50 transition"
               >
+                <td className="p-4 text-gray-500">{p.sku}</td>
                 <td className="p-4 font-medium">{p.name}</td>
-                <td className="p-4">{p.quantity}</td>
+
+                <td
+                  className={`p-4 ${
+                    p.quantity <= 10
+                      ? "text-red-600 font-semibold"
+                      : ""
+                  }`}
+                >
+                  {p.quantity}
+                </td>
+
                 <td className="p-4">{p.category?.name}</td>
                 <td className="p-4">{p.supplier?.name}</td>
 
@@ -126,6 +216,7 @@ export default function ProductsPage() {
                     Delete
                   </button>
 
+                  {/* ✅ UPDATE BUTTON BACK */}
                   <button
                     onClick={async () => {
                       const qty = prompt("Enter quantity:");

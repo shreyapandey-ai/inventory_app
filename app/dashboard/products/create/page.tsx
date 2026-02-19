@@ -8,7 +8,6 @@ export default function CreateProduct() {
 
   const [form, setForm] = useState({
     name: "",
-    sku: "",
     quantity: 0,
     price: 0,
     categoryId: "",
@@ -17,6 +16,7 @@ export default function CreateProduct() {
 
   const [categories, setCategories] = useState<any[]>([]);
   const [suppliers, setSuppliers] = useState<any[]>([]);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     async function fetchData() {
@@ -32,19 +32,26 @@ export default function CreateProduct() {
 
   async function handleSubmit(e: any) {
     e.preventDefault();
+    setError("");
 
-    await fetch("/api/products", {
+    const res = await fetch("/api/products", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
     });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      setError(data.error || "Something went wrong");
+      return;
+    }
 
     router.push("/dashboard/products");
   }
 
   return (
     <div className="p-6 md:p-8 bg-slate-50 min-h-screen flex justify-center">
-
       <form
         onSubmit={handleSubmit}
         className="bg-white p-8 rounded-2xl shadow-sm border w-full max-w-lg"
@@ -53,8 +60,13 @@ export default function CreateProduct() {
           Add Product
         </h1>
 
+        {error && (
+          <p className="text-red-500 mb-4 text-sm">{error}</p>
+        )}
+
         <div className="space-y-4">
 
+          {/* Product Name */}
           <input
             placeholder="Product Name"
             className="w-full p-3 border rounded-xl"
@@ -63,32 +75,30 @@ export default function CreateProduct() {
             }
           />
 
-          <input
-            placeholder="SKU"
-            className="w-full p-3 border rounded-xl"
-            onChange={(e) =>
-              setForm({ ...form, sku: e.target.value })
-            }
-          />
-
+          {/* Quantity */}
           <input
             type="number"
+            min="0"
             placeholder="Quantity"
             className="w-full p-3 border rounded-xl"
             onChange={(e) =>
-              setForm({ ...form, quantity: +e.target.value })
+              setForm({ ...form, quantity: Number(e.target.value) })
             }
           />
 
+          {/* Price */}
           <input
             type="number"
+            min="0"
+            step="0.01"
             placeholder="Price"
             className="w-full p-3 border rounded-xl"
             onChange={(e) =>
-              setForm({ ...form, price: +e.target.value })
+              setForm({ ...form, price: Number(e.target.value) })
             }
           />
 
+          {/* Category */}
           <select
             className="w-full p-3 border rounded-xl"
             onChange={(e) =>
@@ -103,6 +113,7 @@ export default function CreateProduct() {
             ))}
           </select>
 
+          {/* Supplier */}
           <select
             className="w-full p-3 border rounded-xl"
             onChange={(e) =>

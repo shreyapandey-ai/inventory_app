@@ -1,6 +1,9 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
+import { motion } from "framer-motion"
+import { useEffect, useState } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import {
   BarChart,
   Bar,
@@ -11,149 +14,187 @@ import {
   Pie,
   Cell,
   ResponsiveContainer,
-} from "recharts";
+} from "recharts"
 
 export default function DashboardPage() {
-  const [products, setProducts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     fetch("/api/products")
       .then((res) => res.json())
       .then((data) => {
-        if (Array.isArray(data)) setProducts(data);
+        if (Array.isArray(data)) setProducts(data)
       })
-      .finally(() => setLoading(false));
-  }, []);
+      .finally(() => setLoading(false))
+  }, [])
 
-  if (loading)
+  if (loading) {
     return (
-      <div className="flex items-center justify-center h-[60vh] text-slate-500">
+      <div className="flex items-center justify-center h-[60vh] text-muted-foreground">
         Loading dashboard...
       </div>
-    );
+    )
+  }
 
-  const totalProducts = products.length;
-  const totalStock = products.reduce((sum, p) => sum + p.quantity, 0);
-  const lowStock = products.filter(
+  const totalProducts = products.length
+  const totalStock = products.reduce((sum, p) => sum + p.quantity, 0)
+  const lowStockProducts = products.filter(
     (p) => p.quantity <= (p.lowStockThreshold || 5)
-  ).length;
+  )
+  const lowStock = lowStockProducts.length
 
   const chartData = products.map((p) => ({
     name: p.name,
     quantity: p.quantity,
-  }));
+  }))
 
   const pieData = [
-    { name: "In Stock", value: totalProducts - lowStock },
+    { name: "Healthy", value: totalProducts - lowStock },
     { name: "Low Stock", value: lowStock },
-  ];
+  ]
 
-  const COLORS = ["#14b8a6", "#ef4444"];
+  const COLORS = ["#14b8a6", "#ef4444"]
 
   return (
-    <div className="p-6 md:p-8 bg-slate-50 min-h-screen">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="p-6 md:p-10 space-y-10"
+    >
 
       {/* HEADER */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-semibold text-slate-800">
-          Admin Dashboard
+      <div className="space-y-2">
+        <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-teal-600 to-emerald-500 bg-clip-text text-transparent">
+          Inventory Dashboard
         </h1>
-        <p className="text-slate-500 text-sm">
-          Overview of inventory performance
+        <p className="text-muted-foreground">
+          Real-time inventory intelligence overview
         </p>
       </div>
 
       {/* STATS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border">
-          <p className="text-sm text-slate-500">Total Products</p>
-          <h2 className="text-3xl font-semibold mt-2">
-            {totalProducts}
-          </h2>
-        </div>
+        <Card className="hover:-translate-y-1 hover:shadow-2xl transition-all duration-300">
+          <CardHeader>
+            <CardTitle className="text-sm text-muted-foreground">
+              Total Products
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-4xl font-bold">{totalProducts}</p>
+          </CardContent>
+        </Card>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border">
-          <p className="text-sm text-slate-500">Total Stock</p>
-          <h2 className="text-3xl font-semibold mt-2">
-            {totalStock}
-          </h2>
-        </div>
+        <Card className="hover:-translate-y-1 hover:shadow-2xl transition-all duration-300">
+          <CardHeader>
+            <CardTitle className="text-sm text-muted-foreground">
+              Total Stock Units
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-4xl font-bold">{totalStock}</p>
+          </CardContent>
+        </Card>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border">
-          <p className="text-sm text-slate-500">Low Stock Items</p>
-          <h2 className="text-3xl font-semibold mt-2 text-red-500">
-            {lowStock}
-          </h2>
-        </div>
+        <Card className="hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 border-red-200">
+          <CardHeader>
+            <CardTitle className="text-sm text-muted-foreground">
+              Low Stock Items
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex items-center gap-3">
+            <p className="text-4xl font-bold text-red-500">
+              {lowStock}
+            </p>
+            {lowStock > 0 && (
+              <Badge variant="destructive">Attention</Badge>
+            )}
+          </CardContent>
+        </Card>
+
       </div>
 
-      {/* CHARTS GRID */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      {/* CHARTS */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-        {/* BAR */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border">
-          <h2 className="font-semibold mb-4 text-slate-700">
-            Stock by Product
-          </h2>
+        <Card className="hover:shadow-2xl transition-all duration-300">
+          <CardHeader>
+            <CardTitle>Stock by Product</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={320}>
+              <BarChart data={chartData}>
+                <XAxis dataKey="name" stroke="#64748b" />
+                <YAxis stroke="#64748b" />
+                <Tooltip />
+                <Bar
+                  dataKey="quantity"
+                  fill="#14b8a6"
+                  radius={[8, 8, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={chartData}>
-              <XAxis dataKey="name" stroke="#64748b" />
-              <YAxis stroke="#64748b" />
-              <Tooltip />
-              <Bar dataKey="quantity" fill="#14b8a6" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        <Card className="hover:shadow-2xl transition-all duration-300">
+          <CardHeader>
+            <CardTitle>Stock Status</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={320}>
+              <PieChart>
+                <Pie
+                  data={pieData}
+                  dataKey="value"
+                  outerRadius={110}
+                  innerRadius={60}
+                  paddingAngle={4}
+                >
+                  {pieData.map((_, i) => (
+                    <Cell key={i} fill={COLORS[i]} />
+                  ))}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
-        {/* PIE */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border">
-          <h2 className="font-semibold mb-4 text-slate-700">
-            Stock Status
-          </h2>
-
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie data={pieData} dataKey="value" outerRadius={100}>
-                {pieData.map((_, i) => (
-                  <Cell key={i} fill={COLORS[i]} />
-                ))}
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
       </div>
 
-      {/* LOW STOCK ALERT */}
-      <div className="bg-white p-6 rounded-2xl shadow-sm border">
-        <h2 className="text-lg font-semibold text-red-500 mb-4">
-          Low Stock Alerts
-        </h2>
-
-        {lowStock === 0 ? (
-          <p className="text-slate-500 text-sm">
-            All products are sufficiently stocked.
-          </p>
-        ) : (
-          <div className="space-y-2">
-            {products
-              .filter((p) => p.quantity <= (p.lowStockThreshold || 5))
-              .map((p) => (
+      {/* LOW STOCK ALERTS */}
+      <Card className="hover:shadow-2xl transition-all duration-300 border-red-200">
+        <CardHeader>
+          <CardTitle className="text-red-500">
+            Low Stock Alerts
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {lowStock === 0 ? (
+            <p className="text-muted-foreground">
+              All products are sufficiently stocked.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {lowStockProducts.map((p) => (
                 <div
                   key={p.id}
-                  className="flex justify-between p-3 bg-red-50 rounded-xl"
+                  className="flex justify-between items-center p-4 rounded-lg border bg-red-50 hover:bg-red-100 transition"
                 >
-                  <span>{p.name}</span>
-                  <span className="text-red-500 font-medium">
-                    {p.quantity}
-                  </span>
+                  <span className="font-medium">{p.name}</span>
+                  <Badge variant="destructive">
+                    {p.quantity} left
+                  </Badge>
                 </div>
               ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+    </motion.div>
+  )
 }
