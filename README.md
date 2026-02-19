@@ -1,7 +1,7 @@
 
-#Inventory Management System
-##Overview
-###This is a full-stack Inventory Management System built using Next.js (App Router), Prisma ORM, PostgreSQL, and JWT-based authentication.
+Inventory Management System
+Overview
+This is a full-stack Inventory Management System built using Next.js (App Router), Prisma ORM, PostgreSQL, and JWT-based authentication.
 
 The system supports role-based access control with separate Admin and Manager dashboards. It includes product management, stock tracking with movement history, CSV bulk uploads, analytics, and AI-generated reporting.
 
