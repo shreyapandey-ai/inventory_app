@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/////////////////////////
+// USER
+/////////////////////////
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  role      Role     @default(MANAGER)
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+}
+
+/////////////////////////
+// CATEGORY
+/////////////////////////
+
+model Category {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  products  Product[]
+  createdAt DateTime  @default(now())
+}
+
+/////////////////////////
+// SUPPLIER
+/////////////////////////
+
+model Supplier {
+  id        String    @id @default(uuid())
+  name      String
+  email     String?
+  phone     String?
+  products  Product[]
+  createdAt DateTime  @default(now())
+}
+
+/////////////////////////
+// PRODUCT
+/////////////////////////
+
+model Product {
+  id            String          @id @default(uuid())
+  name          String
+  sku           String          @unique
+  description   String?
+  quantity      Int
+  price         Float
+  categoryId    String
+  supplierId    String
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  category      Category        @relation(fields: [categoryId], references: [id])
+  supplier      Supplier        @relation(fields: [supplierId], references: [id])
+  stockMovements StockMovement[]
+}
+
+/////////////////////////
+// STOCK MOVEMENT
+/////////////////////////
+
+model StockMovement {
+  id        String          @id @default(uuid())
+  productId String
+  type      MovementType
+  quantity  Int
+  note      String?
+  createdAt DateTime        @default(now())
+
+  product   Product         @relation(fields: [productId], references: [id])
+}
+
+enum MovementType {
+  SALE
+  RESTOCK
+  DAMAGE
+  RETURN
+}
+
