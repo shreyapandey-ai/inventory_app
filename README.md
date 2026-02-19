@@ -1,10 +1,269 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started
+Inventory Management System
+Overview
+This is a full-stack Inventory Management System built using Next.js (App Router), Prisma ORM, PostgreSQL, and JWT-based authentication.
 
-First, run the development server:
+The system supports role-based access control with separate Admin and Manager dashboards. It includes product management, stock tracking with movement history, CSV bulk uploads, analytics, and AI-generated reporting.
 
-```bash
+This project demonstrates a production-ready architecture with secure APIs, structured database design, and scalable dashboard implementation.
+
+Tech Stack
+Frontend:
+
+Next.js (App Router)
+
+React
+
+Tailwind CSS
+
+Backend:
+
+Next.js API Routes
+
+Prisma ORM
+
+PostgreSQL
+
+Authentication:
+
+JWT (JSON Web Token)
+
+HTTP-only Cookies
+
+Additional Features:
+
+CSV Bulk Product Upload
+
+Stock Movement System
+
+Role-Based Access Control
+
+Analytics Dashboard
+
+AI-Based Report Generation
+
+Core Features
+1. Authentication System
+User Registration
+
+User Login
+
+JWT Authentication
+
+HTTP-only cookie storage
+
+Role-based route protection
+
+Admin and Manager roles
+
+2. Role-Based Access Control
+Admin:
+
+Full dashboard access
+
+Add/Edit/Delete products
+
+Manage categories
+
+Manage suppliers
+
+Update stock
+
+Bulk upload via CSV
+
+View analytics
+
+Generate AI reports
+
+Manager:
+
+Read-only dashboard
+
+View products
+
+View stock analytics
+
+Cannot modify inventory
+
+3. Product Management
+Add new products
+
+Automatic SKU generation
+
+Edit product details
+
+Delete product (only if stock is zero)
+
+Quantity validation (cannot go below 0)
+
+Price validation (must be >= 0)
+
+Linked to category and supplier
+
+4. Stock Movement System
+Every stock update creates a movement record.
+
+Supported Movement Types:
+
+SALE
+
+RESTOCK
+
+DAMAGE
+
+RETURN
+
+Each movement stores:
+
+Type
+
+Quantity
+
+Optional note
+
+Timestamp
+
+Stock is automatically adjusted when a movement is created.
+
+5. CSV Bulk Upload
+Admin can upload multiple products using a CSV file.
+
+Required CSV columns:
+
+name,quantity,price,categoryId,supplierId
+Features:
+
+SKU auto-generated
+
+Negative quantity prevented
+
+Negative price prevented
+
+Bulk insertion using Prisma createMany
+
+6. Analytics Dashboard
+Admin Dashboard includes:
+
+Total Products
+
+Total Stock
+
+Low Stock Detection
+
+Category Distribution
+
+Supplier Distribution
+
+Stock Visualization Charts
+
+Manager Dashboard includes:
+
+Total Products
+
+Total Stock
+
+Read-only product listing
+
+Basic analytics
+
+7. AI Report Generation
+Generates reports based on:
+
+Current stock levels
+
+Low stock items
+
+Inventory summary
+
+Can be extended to export PDF or structured analytics reports.
+
+Database Schema Overview
+Models:
+
+User
+
+id
+
+email
+
+password
+
+role (ADMIN / MANAGER)
+
+Category
+
+id
+
+name
+
+products
+
+Supplier
+
+id
+
+name
+
+email
+
+phone
+
+products
+
+Product
+
+id
+
+name
+
+sku
+
+quantity
+
+price
+
+categoryId
+
+supplierId
+
+stockMovements
+
+StockMovement
+
+id
+
+productId
+
+type (SALE / RESTOCK / DAMAGE / RETURN)
+
+quantity
+
+note
+
+createdAt
+
+Relationships:
+
+Product belongs to Category
+
+Product belongs to Supplier
+
+Product has many StockMovements
+
+Installation Guide
+1. Clone Repository
+git clone https://github.com/shreyapandey-ai/inventory_app.git
+cd inventory_app
+2. Install Dependencies
+npm install
+3. Setup Environment Variables
+Create a .env file:
+
+DATABASE_URL="your_postgresql_connection_string"
+JWT_SECRET="your_secret_key"
+4. Run Prisma Migration
+npx prisma migrate dev
+5. Start Development Server
 npm run dev
 # or
 yarn dev
@@ -35,133 +294,3 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 # inventory_app
-
-## Backend API Routes
-
-The backend API routes are available under the `/api` prefix when running the app locally (default base URL: `http://localhost:3000`). Below are the routes included in this project with typical HTTP methods, example request bodies, and example curl commands you can use in Postman or a terminal. Adjust request bodies/headers to match your app's actual validation.
-
-- **Register**
-	- URL: `/api/auth/register`
-	- Method: `POST`
-	- Description: Create a new user account.
-	- Example JSON body:
-		```json
-		{"name": "Alice", "email": "alice@example.com", "password": "secret"}
-		```
-	- Example curl:
-		```bash
-		curl -X POST http://localhost:3000/api/auth/register \
-			-H "Content-Type: application/json" \
-			-d '{"name":"Alice","email":"alice@example.com","password":"secret"}'
-		```
-
-- **Login**
-	- URL: `/api/auth/login`
-	- Method: `POST`
-	- Description: Authenticate and receive a session token (if implemented).
-	- Example JSON body:
-		```json
-		{"email": "alice@example.com", "password": "secret"}
-		```
-	- Example curl:
-		```bash
-		curl -X POST http://localhost:3000/api/auth/login \
-			-H "Content-Type: application/json" \
-			-d '{"email":"alice@example.com","password":"secret"}'
-		```
-
-- **Categories**
-	- URL: `/api/categories`
-	- Methods: `GET` (list), `POST` (create)
-	- Example create body:
-		```json
-		{"name":"Electronics"}
-		```
-	- Example curl (create):
-		```bash
-		curl -X POST http://localhost:3000/api/categories \
-			-H "Content-Type: application/json" \
-			-d '{"name":"Electronics"}'
-		```
-
-- **Products (list / create)**
-	- URL: `/api/products`
-	- Methods: `GET` (list), `POST` (create)
-	- Example create body:
-		```json
-		{"name":"Widget","sku":"WGT-001","price":9.99,"stock":100,"categoryId":1,"supplierId":1}
-		```
-	- Example curl (create):
-		```bash
-		curl -X POST http://localhost:3000/api/products \
-			-H "Content-Type: application/json" \
-			-d '{"name":"Widget","sku":"WGT-001","price":9.99,"stock":100,"categoryId":1,"supplierId":1}'
-		```
-
-- **Product (by id)**
-	- URL: `/api/products/{id}` (e.g. `/api/products/1`)
-	- Methods: `GET` (retrieve), `PUT` (update), `DELETE` (delete) — depending on implementation
-	- Example curl (GET):
-		```bash
-		curl http://localhost:3000/api/products/1
-		```
-
-- **Bulk products**
-	- URL: `/api/products/bulk`
-	- Method: `POST`
-	- Description: Bulk create or import products (payload depends on implementation).
-	- Example curl:
-		```bash
-		curl -X POST http://localhost:3000/api/products/bulk \
-			-H "Content-Type: application/json" \
-			-d '[{"name":"A","sku":"A1","price":1.0},{"name":"B","sku":"B1","price":2.0}]'
-		```
-
-- **Update stock**
-	- URL: `/api/products/update-stock`
-	- Method: `POST`
-	- Description: Update inventory stock levels (single or multiple). Example body and behavior depend on your implementation.
-	- Example JSON body:
-		```json
-		[{"id":1,"stock":90},{"id":2,"stock":50}]
-		```
-
-- **Suppliers**
-	- URL: `/api/suppliers`
-	- Methods: `GET` (list), `POST` (create)
-	- Example create body:
-		```json
-		{"name":"Acme Supplies","email":"sales@acme.example"}
-		```
-	- Example curl (create):
-		```bash
-		curl -X POST http://localhost:3000/api/suppliers \
-			-H "Content-Type: application/json" \
-			-d '{"name":"Acme Supplies","email":"sales@acme.example"}'
-		```
-
-- **AI Report**
-	- URL: `/api/ai/report`
-	- Method: `POST`
-	- Description: Generate or request an AI-based report (payload depends on implementation in `app/api/ai/report/route.ts`).
-	- Example curl:
-		```bash
-		curl -X POST http://localhost:3000/api/ai/report \
-			-H "Content-Type: application/json" \
-			-d '{"type":"inventory_summary","params":{}}'
-		```
-
-Notes and testing tips:
-
-- Use `Content-Type: application/json` header for JSON bodies.
-- Some routes may require authentication — include `Authorization: Bearer <token>` header if the route enforces auth.
-- Replace `http://localhost:3000` with your deployed URL when testing remotely.
-- If an endpoint returns validation errors, inspect the response body for expected fields.
-
-Postman quick checklist:
-
-1. Create a new environment with `baseUrl` set to `http://localhost:3000`.
-2. Add requests using `{{baseUrl}}/api/<route>` and set method + headers.
-3. For protected routes, add an `Authorization` header with `Bearer <token>` if you obtained a token from `/api/auth/login`.
-
-If you want, I can run the dev server and test each endpoint against the local API and paste sample responses below — tell me if you'd like me to proceed.
