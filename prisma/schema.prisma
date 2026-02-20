@@ -3,13 +3,10 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
-
-/////////////////////////
-// USER
-/////////////////////////
 
 model User {
   id        String   @id @default(uuid())
@@ -24,10 +21,6 @@ enum Role {
   MANAGER
 }
 
-/////////////////////////
-// CATEGORY
-/////////////////////////
-
 model Category {
   id        String    @id @default(uuid())
   name      String    @unique
@@ -35,22 +28,14 @@ model Category {
   createdAt DateTime  @default(now())
 }
 
-/////////////////////////
-// SUPPLIER
-/////////////////////////
-
 model Supplier {
   id        String    @id @default(uuid())
-  name      String
-  email     String?
+  name      String    @unique
+  email     String?   @unique
   phone     String?
   products  Product[]
   createdAt DateTime  @default(now())
 }
-
-/////////////////////////
-// PRODUCT
-/////////////////////////
 
 model Product {
   id            String          @id @default(uuid())
@@ -64,24 +49,26 @@ model Product {
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
 
-  category      Category        @relation(fields: [categoryId], references: [id])
-  supplier      Supplier        @relation(fields: [supplierId], references: [id])
+  category      Category        @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  supplier      Supplier        @relation(fields: [supplierId], references: [id], onDelete: Cascade)
   stockMovements StockMovement[]
+
+  @@index([categoryId])
+  @@index([supplierId])
 }
 
-/////////////////////////
-// STOCK MOVEMENT
-/////////////////////////
-
 model StockMovement {
-  id        String          @id @default(uuid())
+  id        String   @id @default(uuid())
   productId String
   type      MovementType
   quantity  Int
   note      String?
-  createdAt DateTime        @default(now())
+  createdAt DateTime @default(now())
 
-  product   Product         @relation(fields: [productId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, type])
+  @@index([productId])
 }
 
 enum MovementType {
@@ -90,4 +77,3 @@ enum MovementType {
   DAMAGE
   RETURN
 }
-
