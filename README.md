@@ -1,4 +1,4 @@
-
+Here is th live link , visit here https://inventory-app-bzxa.vercel.app/
 Inventory Management System
 Overview
 This is a full-stack Inventory Management System built using Next.js (App Router), Prisma ORM, PostgreSQL, and JWT-based authentication.
